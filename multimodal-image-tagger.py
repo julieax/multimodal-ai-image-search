@@ -28,7 +28,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS image_keywords
 # Set the directory path
 dataset_name = "SUN-mini"
 dir_path = os.path.join(f"/home/{os.getlogin()}/Documents/aiphotofinder/", dataset_name)
-# logger.info(f"Dataset Path: {dir_path})
+logger.info(f"Dataset Path: {dir_path}")
 
 filenames = os.listdir(dir_path)
 logger.info(f"{len(filenames)} files found: {filenames}")
@@ -114,19 +114,24 @@ for filename in image_filenames:
 conn.close()
 pbar.close()
 
-# Create a new backup folder name by combining the dataset folder name with '-backup'
-backup_folder_name = f"{dataset_name}-backup"
+# Create a new processed folder name by combining the dataset folder name with '-processed'
+processed_folder_name = f"{dataset_name}-processed"
 
-# Create the new backup folder in parent directory if it doesn't exist
+# Create the new processed folder in parent directory if it doesn't exist
 parent_dir = os.path.dirname(dir_path)
-new_backup_dir = os.path.join(parent_dir, backup_folder_name)
-print(new_backup_dir)
+new_processed_dir = os.path.join(parent_dir, processed_folder_name)
+print(new_processed_dir)
 
-if not os.path.exists(new_backup_dir):
-    os.makedirs(new_backup_dir)
+if not os.path.exists(new_processed_dir):
+    os.makedirs(new_processed_dir)
 
-# Move original image files to the new 'backup' folder
+# Move processed files to the new 'processed' folder
+for filename in os.listdir(dir_path):
+    if filename.endswith('.jpg'):
+        shutil.move(os.path.join(dir_path, filename), os.path.join(new_processed_dir, filename))
+
+# Rename original files back to their .jpg extension
 for filename in os.listdir(dir_path):
     if filename.endswith('.jpg_original'):
         new_filename = filename.replace(".jpg_original", ".jpg")
-        shutil.move(os.path.join(dir_path, filename), os.path.join(new_backup_dir, new_filename))
+        shutil.move(os.path.join(dir_path, filename), os.path.join(dir_path, new_filename))

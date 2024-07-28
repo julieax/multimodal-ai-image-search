@@ -2,5 +2,5 @@
 SUN-mini/
 SUN397/
 
-# Ignore backupfiles
-*-backup/
+# Ignore processed files
+*-processed/
