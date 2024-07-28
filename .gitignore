@@ -1,3 +1,6 @@
 # Dont check in SUN Image dataset files - https://vision.princeton.edu/projects/2010/SUN/
 SUN-mini/
 SUN397/
+
+# Ignore backupfiles
+*-backup/

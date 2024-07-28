@@ -5,6 +5,7 @@ import json
 import logging
 import sqlite3
 import exiftool
+import shutil
 from tqdm import tqdm
 
 # Create a logger
@@ -25,7 +26,10 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS image_keywords
                   (filename TEXT, keywords TEXT)''')
 
 # Set the directory path
-dir_path = f"/home/{os.getlogin()}/Documents/aiphotofinder/SUN-mini/"
+dataset_name = "SUN-mini"
+dir_path = os.path.join(f"/home/{os.getlogin()}/Documents/aiphotofinder/", dataset_name)
+# logger.info(f"Dataset Path: {dir_path})
+
 filenames = os.listdir(dir_path)
 logger.info(f"{len(filenames)} files found: {filenames}")
 
@@ -79,6 +83,10 @@ for filename in image_filenames:
         conn.commit()
         logger.info(f"Saved keywords for {filename} to database successfully!")
 
+    else:
+        logger.error(f"Error sending request for {filename}: {response.text}")
+
+    try:
         # Save the updated EXIF data back to the image file
         with exiftool.ExifToolHelper() as et:
             # Execute the exiftool
@@ -94,9 +102,10 @@ for filename in image_filenames:
                 for file, data in zip(filepath, metadata):
                     logger.info(f"{file}:{data}")
                 logger.info(f"EXIF data for {filename} updated successfully!")
+                
+    except Exception as e:
+        logger.error(f"Error updating EXIF data for {filename}: {str(e)}")
 
-    else:
-        logger.error(f"Error sending request for {filename}: {response.text}")
 
     # Update the progress bar
     pbar.update(1)
@@ -104,3 +113,20 @@ for filename in image_filenames:
 # Close the SQLite database connection
 conn.close()
 pbar.close()
+
+# Create a new backup folder name by combining the dataset folder name with '-backup'
+backup_folder_name = f"{dataset_name}-backup"
+
+# Create the new backup folder in parent directory if it doesn't exist
+parent_dir = os.path.dirname(dir_path)
+new_backup_dir = os.path.join(parent_dir, backup_folder_name)
+print(new_backup_dir)
+
+if not os.path.exists(new_backup_dir):
+    os.makedirs(new_backup_dir)
+
+# Move original image files to the new 'backup' folder
+for filename in os.listdir(dir_path):
+    if filename.endswith('.jpg_original'):
+        new_filename = filename.replace(".jpg_original", ".jpg")
+        shutil.move(os.path.join(dir_path, filename), os.path.join(new_backup_dir, new_filename))
