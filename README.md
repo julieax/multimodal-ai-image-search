@@ -22,9 +22,9 @@ pip install -r requirements.txt
 ```
 2. Update the dataset name and directory path in the `multimodal-image-tagger.py` file to point to the image folder you would like to process.
 
-3. Run the python image processing script and watch it process your image files.
+3. Run the python image processing script and watch it process your image files. Be sure to change the `--image_folder_name` and `--image_folder_path` to reflect the images you want to process.
 ```
-python3 multimodal-image-tagger.py
+python3 multimodal-image-tagger.py --image_folder_name="SUN-mini" --image_folder_path="/home/$USER/Documents/multimodal-ai-image-search/SUN-mini"
 ```
 
 ## Using Processed Images with Photoprism via Docker

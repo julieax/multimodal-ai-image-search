@@ -1,4 +1,5 @@
 import os
+import argparse
 import base64
 import requests
 import json
@@ -22,12 +23,22 @@ cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS image_database
                   (filename TEXT, description TEXT, keywords TEXT)''')
 
-# Set the directory path
-dataset_name = "SUN-mini"
-dir_path = os.path.join(f"/home/{os.getlogin()}/Documents/aiphotofinder/", dataset_name)
-logger.info(f"Dataset Path: {dir_path}")
+# Create an ArgumentParser object
+parser = argparse.ArgumentParser(description='Process image folder')
 
-filenames = os.listdir(dir_path)
+
+# Add user input arguments for image_folder_name and image_folder_path
+parser.add_argument('--image_folder_name', type=str, required=True)
+parser.add_argument('--image_folder_path', type=str, required=True)
+
+args = parser.parse_args()
+
+# Construct the full image_folder_path using the provided arguments
+image_folder_name = args.image_folder_name
+image_folder_path = args.image_folder_path
+logger.info(f"Dataset Path: {image_folder_path}")
+
+filenames = os.listdir(image_folder_path)
 logger.info(f"{len(filenames)} files found: {filenames}")
 
 # Filter out non-image files
@@ -40,7 +51,7 @@ for filename in image_filenames:
     logger.info(f"Processing {filename}...")
     
     # Open the image file in binary mode
-    with open(os.path.join(dir_path, filename), 'rb') as f:
+    with open(os.path.join(image_folder_path, filename), 'rb') as f:
         # Read the entire file into a bytes object
         image_data = f.read()
         
@@ -87,7 +98,7 @@ for filename in image_filenames:
             description = description_data['response']
             logger.info(description) # Print the API response
 
-            filepath = dir_path+'/'+filename
+            filepath = image_folder_path+'/'+filename
             # Check if an entry with the same filename already exists in the table
             cursor.execute("SELECT 1 FROM image_database WHERE filename = ?", (filepath,))
             if cursor.fetchone():
@@ -133,10 +144,10 @@ conn.close()
 pbar.close()
 
 # Create a new processed folder name by combining the dataset folder name with '-processed'
-processed_folder_name = f"{dataset_name}-processed"
+processed_folder_name = f"{image_folder_name}-processed"
 
 # Create the new processed folder in parent directory if it doesn't exist
-parent_dir = os.path.dirname(dir_path)
+parent_dir = os.path.dirname(image_folder_path)
 new_processed_dir = os.path.join(parent_dir, processed_folder_name)
 print(new_processed_dir)
 
@@ -144,12 +155,14 @@ if not os.path.exists(new_processed_dir):
     os.makedirs(new_processed_dir)
 
 # Move processed files to the new 'processed' folder
-for filename in os.listdir(dir_path):
-    if filename.endswith('.jpg'):
-        shutil.move(os.path.join(dir_path, filename), os.path.join(new_processed_dir, filename))
+for filename in os.listdir(image_folder_path):
+    if filename.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
+        shutil.move(os.path.join(image_folder_path, filename), os.path.join(new_processed_dir, filename))
 
-# Rename original files back to their .jpg extension
-for filename in os.listdir(dir_path):
-    if filename.endswith('.jpg_original'):
-        new_filename = filename.replace(".jpg_original", ".jpg")
-        shutil.move(os.path.join(dir_path, filename), os.path.join(dir_path, new_filename))
+# Rename original files back to their extension
+for filename in os.listdir(image_folder_path):
+    for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']:
+        if filename.endswith(ext + '_original'):
+            new_filename = filename.replace("_original", "")
+            shutil.move(os.path.join(image_folder_path, filename), os.path.join(image_folder_path, new_filename))
+
