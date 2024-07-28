@@ -4,3 +4,9 @@ SUN397/
 
 # Ignore processed files
 *-processed/
+
+# Ignore sqllite database
+image_database.db
+
+# Ignore VS Code files
+settings.json
